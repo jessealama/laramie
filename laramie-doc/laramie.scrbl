@@ -8,7 +8,9 @@
 
 @defmodule[laramie]
 
-Laramie is an HTML5 parser for Racket.
+Laramie is an HTML5 parser for Racket. Give it an HTML
+document in the form of a (byte) string or URL, get an xexpr
+as a result.
 
 Laramie is implemented in Typed Racket. But that's an
 implementation detail that you don't need to concern

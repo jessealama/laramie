@@ -4,9 +4,9 @@
 
 (define build-deps '("base"))
 
-(define update-implies '("dalls-lib"))
+(define update-implies '("laramie-lib"))
 
-(define pkg-desc "Tests for Dallas")
+(define pkg-desc "Tests for Laramie")
 
 (define pkg-authors '("jesse@serverracket.com"))
 
