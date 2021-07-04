@@ -1,8 +1,7 @@
 #lang racket/base
 
-(require (file "util.rkt")
-         racket/require
-         (multi-in "../src"
+(require racket/require
+         (multi-in ".."
                    ("types.rkt"
                     "tokenize.rkt"
                     "tokens.rkt")))

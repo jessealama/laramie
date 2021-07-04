@@ -1,7 +1,11 @@
 #lang racket/base
 
-(require laramie/tokenize
-         (file "util.rkt"))
+(require racket/require
+         (multi-in ".."
+                   ("types.rkt"
+                    "tokenize.rkt"
+                    "tokens.rkt"
+                    "doctype.rkt")))
 
 (module+ test
   (require rackunit

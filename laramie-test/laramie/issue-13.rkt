@@ -1,7 +1,6 @@
 #lang typed/racket/base
 
-(require (file "util.rkt")
-         (file "../src/types.rkt")
+(require (file "../src/types.rkt")
          (file "../src/tokenize.rkt")
          (file "../src/parser.rkt")
          (file "../src/parameters.rkt")

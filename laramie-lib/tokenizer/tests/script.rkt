@@ -1,6 +1,12 @@
 #lang racket/base
 
-(require laramie/tokenize)
+(require racket/require
+         (multi-in ".."
+                   ("types.rkt"
+                    "tokenize.rkt"
+                    "tokens.rkt"
+                    "script.rkt"
+                    "parameters.rkt")))
 
 (module+ test
   (require rackunit
@@ -16,7 +22,7 @@
                     (tokenize subject
                               #:include-dropped? #t
                               #:include-errors? #t
-                              #:initial-tokenizer script:data))])
+                              #:initial-tokenizer SCRIPT))])
       (test-case
           (format "~a [value]" test-name)
         (check-equal? tokens
