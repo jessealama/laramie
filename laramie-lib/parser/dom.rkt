@@ -22,11 +22,11 @@
          element-has-name?
          document-of
          descendants
-         element
+         make-element
          make-comment-node
          make-doctype-node
          strings-in-elements
-         document-element
+         document-element-of
          element-has-attribute?
          element-has-value-for-attribute?
          element-has-ci-value-for-attribute?
@@ -442,15 +442,15 @@
   (doctype-node token
                 (or parent (current-node-or-document))))
 
-(: element (->* (#:token start-tag-token)
-                (#:parent (Option (U element-node document-node))
-                 #:namespace String
-                 #:induced? Boolean)
-                element-node))
-(define (element #:token token
-                 #:parent [parent #f]
-                 #:namespace [namespace html-namespace]
-                 #:induced? [induced? #f])
+(: make-element (->* (#:token start-tag-token)
+                     (#:parent (Option (U element-node document-node))
+                      #:namespace String
+                      #:induced? Boolean)
+                     element-node))
+(define (make-element #:token token
+                      #:parent [parent #f]
+                      #:namespace [namespace html-namespace]
+                      #:induced? [induced? #f])
   (element-node token
                 (or parent (current-node-or-document))
                 (list)
@@ -557,12 +557,12 @@
   (and (string? v)
        (string-ci=? v value)))
 
-(: document-element (-> (U parser-state
-                           document-node)
-                        (Option element-node)))
-(define (document-element thing)
+(: document-element-of (-> (U parser-state
+                              document-node)
+                           (Option element-node)))
+(define (document-element-of thing)
   (cond [(parser-state? thing)
-         (document-element (parser-state-document thing))]
+         (document-element-of (parser-state-document thing))]
         [else
          (define kids (filter element-node? (document-node-children thing)))
          (cond [(null? kids)
@@ -681,7 +681,7 @@
   (cond [(parser-state? thing)
          (enumerate-elements (parser-state-document thing))]
         [(document-node? thing)
-         (define e (document-element thing))
+         (define e (document-element-of thing))
          (cond [(eq? #f e)
                 (list)]
                [else

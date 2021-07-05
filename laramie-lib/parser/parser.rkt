@@ -108,11 +108,11 @@
                                  #f
                                  #f
                                  (list)))
-  (element #:token token
-           #:parent (or (current-node)
-                        (current-document))
-           #:namespace html-namespace
-           #:induced? #t))
+  (make-element #:token token
+                #:parent (or (current-node)
+                             (current-document))
+                #:namespace html-namespace
+                #:induced? #t))
 
 (: switch-mode (-> InsertionMode Void))
 (define (switch-mode new-mode)
@@ -2571,12 +2571,6 @@
          (stop-parsing)]
         [else
          (keep-parsing)]))
-
-#|
-
-cleanup bytes | tokenize | parse
-
-|#
 
 (: parse (-> (U String Bytes)
              parser-state))

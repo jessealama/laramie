@@ -36,7 +36,8 @@
          string-starts-with-null-character?
          extract-first-character
          drop-first-character
-         string-token->character-tokens)
+         string-token->character-tokens
+         character-tokens->string)
 
 (require syntax/parse/define
          (file "types.rkt")
@@ -795,3 +796,16 @@
   (define s (string-token-content token))
   (extend-characters-with-location (span-start token)
                                    (string->list s)))
+
+(: character-token->char (-> character-token
+                             (Option Char)))
+(define (character-token->char ct)
+  (define c (character-token-content ct))
+  (cond [(char? c) c]
+        [(eq? #f (cdr c)) #f]
+        [else (cdr c)]))
+
+(: character-tokens->string (-> (Listof character-token)
+                                String))
+(define (character-tokens->string tokens)
+  (list->string (filter char? (map character-token->char tokens))))
