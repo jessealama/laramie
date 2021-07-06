@@ -16,7 +16,7 @@ jobs:
         sudo: never
     - name: Register local packages
       run: |
-        raco pkg install -i --auto --no-setup --skip-installed laramie-test
+        raco pkg install -i --auto --no-setup --skip-installed laramie
         raco pkg update --auto --no-setup laramie-lib laramie-doc laramie laramie-test
     - run: raco setup --check-pkg-deps laramie
     - run: raco test -j 4 laramie-lib/ laramie-test/
