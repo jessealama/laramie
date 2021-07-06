@@ -5,4 +5,7 @@
 (define description "Implementation for Laramie")
 (define authors '("jesse@serverracket.com"))
 (define deps '("base"
+               "typed-racket-lib"
                "txexpr"))
+(define build-deps '("rackunit-lib"
+                     "rackunit-typed"))
