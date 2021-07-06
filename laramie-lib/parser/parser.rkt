@@ -7,21 +7,13 @@
          (file "../tokenizer/main.rkt")
          (file "types.rkt")
          (file "../tokenizer/types.rkt")
-         ;(file "network.rkt")
-         ;(file "predicates.rkt")
          (file "../tokenizer/tokens.rkt")
-         ;(file "characters.rkt")
-         ;(file "infrastructure.rkt")
          (file "../tokenizer/tokenize.rkt")
          (file "dom.rkt")
-         ;(file "nodes.rkt")
          (file "parameters.rkt")
          (file "../tokenizer/parameters.rkt")
          (file "../tokenizer/stream.rkt")
          (file "../private/todo.rkt"))
-
-(module+ test
-  (require typed/rackunit))
 
 (: keep-popping (-> (U String (Listof String))
                     Void))

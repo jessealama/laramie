@@ -6,10 +6,10 @@
 
 (define deps
   '("laramie-lib"
-    "laramie-docs"))
+    "laramie-doc"))
 
 (define implies
   '("laramie-lib"
-    "laramie-docs"))
+    "laramie-doc"))
 
 (define pkg-authors '("jesse@serverracket.com"))
