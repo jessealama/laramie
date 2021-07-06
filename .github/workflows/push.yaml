@@ -3,15 +3,19 @@ name: CI
 jobs:
   build:
     runs-on: ubuntu-latest
+    matrix:
+      racket-version: ["current"]
+      racket-variant: ["CS"]
     steps:
     - uses: actions/checkout@master
     - uses: Bogdanp/setup-racket@v1.5
       with:
         architecture: 'x64'
         distribution: 'full'
-        variant: 'CS'
-        version: '8.1'
+        variant: ${{ matrix.racket-variant }}
+        version: ${{ matrix.racket-version }}
         local_catalogs: $GITHUB_WORKSPACE
+        dest: '"${HOME}/racketdist-${{ matrix.racket-version }}-${{ matrix.racket-variant }}"'
     - name: Register local packages
       run: |
         raco pkg install -i --auto --no-setup --skip-installed gillette-test
