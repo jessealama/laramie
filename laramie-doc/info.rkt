@@ -4,7 +4,6 @@
 
 (define build-deps '("scribble-lib"
                      "laramie-lib"
-                     "xml"
                      "racket-doc"))
 
 (define deps '("base"))
