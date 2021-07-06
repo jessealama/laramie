@@ -1,6 +1,7 @@
 #lang typed/racket/base
 
-(provide ->html)
+(provide ->html
+         ->xml)
 
 (require racket/require
          racket/pretty
@@ -10,9 +11,21 @@
          typed/racket/unsafe
          (file "types.rkt")
          (file "dom.rkt")
+         (prefix-in xml: (file "xml.rkt"))
          (multi-in "../tokenizer"
                    ("types.rkt"
                     "tokens.rkt")))
+
+(unsafe-require/typed
+ txexpr
+ [txexpr (-> Symbol
+             (Listof (List Symbol String))
+             (Listof XExpr)
+             XExpr)]
+ [txexpr* (-> Symbol
+              (Listof (List Symbol String))
+              XExpr *
+              XExpr)])
 
 (module+ test
   (require typed/rackunit))
@@ -149,6 +162,13 @@
   (comment (span-start (comment-token-less-than token))
            (list->string (enumerate-output-characters content))))
 
+(: comment-node->xml-comment (-> comment-node
+                                 xml:comment))
+(define (comment-node->xml-comment c)
+  (define token (comment-node-token c))
+  (define content (comment-token-content token))
+  (xml:comment (list->string (enumerate-output-characters content))))
+
 (: doctype-node->dtd (-> doctype-node
                          document-type))
 (define (doctype-node->dtd d)
@@ -164,6 +184,27 @@
                  (cond [(eq? #f public) #f]
                        [else (character-tokens->string public)])))
 
+(: doctype-node->xml-document-type (-> doctype-node
+                                       xml:document-type))
+(define (doctype-node->xml-document-type d)
+  (define token (doctype-node-token d))
+  (define start (span-start (doctype-token-less-than token)))
+  (define name (character-tokens->string (doctype-token-name token)))
+  (define system (doctype-token-system token))
+  (define public (doctype-token-system token))
+  (define system/string (cond [(eq? #f system) ""]
+                              [else (character-tokens->string system)]))
+  (define public/string (cond [(eq? #f public) ""]
+                              [else (character-tokens->string public)]))
+  (define dtd (cond [(string=? "" public/string)
+                     (xml:external-dtd/system system/string)]
+                    [else
+                     (xml:external-dtd/public system/string
+                                              public/string)]))
+  (xml:document-type (string->symbol name)
+                     dtd
+                     #f))
+
 (: attribute-node->attribute (-> attribute-node
                                  attribute))
 (define (attribute-node->attribute attr)
@@ -174,6 +215,39 @@
              #f
              (cond [(eq? #f value) #f]
                    [else (quoted-attr->string value)])))
+
+(: location->xml-location (-> location
+                              xml:location))
+(define (location->xml-location loc)
+  (xml:location (location-line loc)
+                (location-column loc)
+                (location-position loc)))
+
+(: attribute-node->xml-attribute (-> attribute-node
+                                     xml:attribute))
+(define (attribute-node->xml-attribute attr)
+  (define token (attribute-node-token attr))
+  (define value (attribute-token-value token))
+  (define name (character-tokens->string (attribute-token-name token)))
+  (xml:attribute (location->xml-location (span-start token))
+                 (location->xml-location (span-start token)) ; obviously wrong
+                 (string->symbol
+                  (character-tokens->string
+                   (attribute-token-name token)))
+                 (cond [(eq? #f value) name]
+                       [else (quoted-attr->string value)])))
+
+(: attribute-node->xexpr-attribute (-> attribute-node
+                                       (List Symbol String)))
+(define (attribute-node->xexpr-attribute attr)
+  (define token (attribute-node-token attr))
+  (define value (attribute-token-value token))
+  (define name (character-tokens->string (attribute-token-name token)))
+  (list (string->symbol
+         (character-tokens->string
+          (attribute-token-name token)))
+        (cond [(eq? #f value) name]
+              [else (quoted-attr->string value)])))
 
 (: element-node->element (-> element-node
                              element))
@@ -188,6 +262,32 @@
            'html
            attrs
            content))
+
+(: element-node->xml-element (-> element-node
+                                 xml:element))
+(define (element-node->xml-element elem)
+  (define token (element-node-token elem))
+  (define start (span-start (tag-token-less-than token)))
+  (define name (character-tokens->string (tag-token-name token)))
+  (define attrs (map attribute-node->xml-attribute (element-node-attributes elem)))
+  (define content (element-children->xml (element-node-children elem)))
+  (xml:element (location->xml-location start)
+               (location->xml-location start) ; obviously wrong
+               (string->symbol name)
+               attrs
+               content))
+
+(: element-node->xexpr (-> element-node
+                           XExpr))
+(define (element-node->xexpr elem)
+  (define token (element-node-token elem))
+  (define start (span-start (tag-token-less-than token)))
+  (define name (character-tokens->string (tag-token-name token)))
+  (define attrs (map attribute-node->xexpr-attribute (element-node-attributes elem)))
+  (define content (element-children->xexprs (element-node-children elem)))
+  (txexpr (string->symbol name)
+          attrs
+          content))
 
 (: element-children->html (-> (Listof (U element-node
                                          comment-node
@@ -213,6 +313,59 @@
                                            (string-token? x)))))
          (cons (text-stretch->string stretch)
                (element-children->html (drop kids (length stretch))))]))
+
+(: element-children->xml (-> (Listof (U element-node
+                                        comment-node
+                                        character-token
+                                        character-reference-token
+                                        string-token))
+                             (Listof (U xml:element
+                                        xml:comment
+                                        xml:cdata))))
+(define (element-children->xml kids)
+  (cond [(null? kids)
+         (list)]
+        [(element-node? (car kids))
+         (cons (element-node->xml-element (car kids))
+               (element-children->xml (cdr kids)))]
+        [(comment-node? (car kids))
+         (cons (comment-node->xml-comment (car kids))
+               (element-children->xml (cdr kids)))]
+        [else
+         (define kid (car kids))
+         (define start (span-start kid))
+         (define stretch (takef kids (lambda (x)
+                                       (or (character-token? x)
+                                           (character-reference-token? x)
+                                           (string-token? x)))))
+         (cons (xml:cdata (location->xml-location start)
+                          (location->xml-location start) ; obviously wrong
+                          (text-stretch->string stretch))
+               (element-children->xml (drop kids (length stretch))))]))
+
+(: element-children->xexprs (-> (Listof (U element-node
+                                           comment-node
+                                           character-token
+                                           character-reference-token
+                                           string-token))
+                                (Listof XExpr)))
+(define (element-children->xexprs kids)
+  (cond [(null? kids)
+         (list)]
+        [(element-node? (car kids))
+         (cons (element-node->xexpr (car kids))
+               (element-children->xexprs (cdr kids)))]
+        [(comment-node? (car kids)) ; drop comments:
+         (element-children->xexprs (cdr kids))]
+        [else
+         (define kid (car kids))
+         (define start (span-start kid))
+         (define stretch (takef kids (lambda (x)
+                                       (or (character-token? x)
+                                           (character-reference-token? x)
+                                           (string-token? x)))))
+         (cons (text-stretch->string stretch)
+               (element-children->xexprs (drop kids (length stretch))))]))
 
 (: ->html (-> document-node
               document))
@@ -264,6 +417,40 @@
          (string-append (string-token-content (car stretch))
                         (text-stretch->string (cdr stretch)))]))
 
+(: ->xml (-> document-node
+             xml:document))
+(define (->xml doc)
+  (define doc-partitions (partition-document-children (document-node-children doc)))
+  (define before-element (first doc-partitions))
+  (define element (second doc-partitions))
+  (define after-element (third doc-partitions))
+  (cond [(eq? #f element)
+         (error "Failed to find a root element")]
+        [else
+         (define prolog-partitions (partition-prolog-children before-element))
+         (define before-doctype (first prolog-partitions))
+         (define doctype (second prolog-partitions))
+         (define after-doctype (third prolog-partitions))
+         (define p (xml:prolog (map comment-node->xml-comment before-doctype)
+                               (cond [(eq? #f doctype) #f]
+                                     [else (doctype-node->xml-document-type doctype)])
+                               (map comment-node->xml-comment after-doctype)))
+         (xml:document p
+                       (element-node->xml-element element)
+                       (map comment-node->xml-comment (filter comment-node? after-element)))]))
+
+(: ->xexpr (-> document-node
+               XExpr))
+(define (->xexpr doc)
+  (define doc-partitions (partition-document-children (document-node-children doc)))
+  (define before-element (first doc-partitions))
+  (define element (second doc-partitions))
+  (define after-element (third doc-partitions))
+  (cond [(eq? #f element)
+         (error "Failed to find a root element")]
+        [else
+         (element-node->xexpr element)]))
+
 (module+ main
   (require racket/cmdline
            racket/pretty
@@ -280,4 +467,4 @@
                             url))
   (define r (response-body (get (format "~a" url))))
   (unless (eq? #f r)
-    (pretty-print (->html (parser-state-document (parse r))))))
+    (pretty-print (->xexpr (parser-state-document (parse r))))))

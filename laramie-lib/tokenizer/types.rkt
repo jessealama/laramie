@@ -2,9 +2,6 @@
 
 (provide Token
 
-         ; Rendering
-         XExpr
-
          ; Characters
          ASCIIWhitespaceCodepoint
          ControlCodepoint
@@ -537,11 +534,6 @@
                 (Listof (U Token EOF)))]
    [next : (Option (-> tokenizer-step))])
   #:transparent)
-
-(define-type XExpr
-  (U String Symbol Char
-     (Pairof Symbol (Pairof (Listof (List Symbol String)) (Listof XExpr)))
-     (Pairof Symbol (Listof XExpr))))
 
 (struct tokenizer
   ([scanner : (-> (Listof (U Token tokenizer)))]))

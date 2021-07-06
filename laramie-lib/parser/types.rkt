@@ -27,7 +27,9 @@
          (struct-out closing-tag-not-in-scope)
          (struct-out doctype-dropped)
          (struct-out unexpected-token)
-         (struct-out element-induced))
+         (struct-out element-induced)
+
+         XExpr)
 
 (require (file "../tokenizer/types.rkt"))
 
@@ -175,3 +177,10 @@
    [prefix : (Option Symbol)]
    [value : (Option String)])
   #:transparent)
+
+(define-type XExpr
+  (U String
+     Symbol
+     Char
+     (Pairof Symbol (Pairof (Listof (List Symbol String)) (Listof XExpr)))
+     (Pairof Symbol (Listof XExpr))))

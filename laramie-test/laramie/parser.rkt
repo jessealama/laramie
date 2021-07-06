@@ -1,7 +1,6 @@
 #lang typed/racket/base
 
-(require laramie
-         (file "util.rkt"))
+(require laramie)
 
 (module+ test
   (require typed/rackunit
