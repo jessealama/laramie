@@ -13,6 +13,7 @@ jobs:
         version: "8.1"
         local_catalogs: $GITHUB_WORKSPACE
         dest: '/opt/racketdist'
+        sudo: never
     - name: Register local packages
       run: |
         raco pkg install -i --auto --no-setup --skip-installed gillette-test
