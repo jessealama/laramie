@@ -3,15 +3,6 @@ name: CI
 jobs:
   build:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:12
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: deta
-          POSTGRES_PASSWORD: deta
-          POSTGRES_DATABASE: deta
     steps:
     - uses: actions/checkout@master
     - uses: Bogdanp/setup-racket@v1.5
