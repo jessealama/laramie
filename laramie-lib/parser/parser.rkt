@@ -11,6 +11,7 @@
          (file "../tokenizer/tokenize.rkt")
          (file "dom.rkt")
          (file "parameters.rkt")
+         (file "convert.rkt")
          (file "../tokenizer/parameters.rkt")
          (file "../tokenizer/stream.rkt")
          (file "../private/todo.rkt"))
@@ -2565,7 +2566,7 @@
          (keep-parsing)]))
 
 (: parse (-> (U String Bytes)
-             parser-state))
+             document))
 (define (parse str)
   (define in (cond [(string? str) (open-input-string str)]
                    [else (open-input-bytes str)]))
@@ -2575,7 +2576,7 @@
                  [include-dropped-chars? #t]
                  [include-tokenizer-errors? #t])
     (keep-parsing)
-    (current-parser-state)))
+    (->html (parser-state-document (current-parser-state)))))
 
 (: stop-parsing (-> Void))
 (define (stop-parsing)
@@ -2589,3 +2590,20 @@
    (struct-copy parser-state
                 s
                 [insertion-mode next-modes])))
+
+(module+ main
+  (require racket/cmdline
+           racket/pretty
+           racket/port
+           typed/racket/unsafe)
+  (unsafe-require/typed
+   net/http-easy
+   [get (->* (Any)
+             (#:timeouts Any)
+             Any)]
+   [response-body (-> Any Bytes)])
+  (define url (command-line #:args (url)
+                            url))
+  (define r (response-body (get (format "~a" url))))
+  (unless (eq? #f r)
+    (pretty-print (parse r))))

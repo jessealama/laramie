@@ -173,7 +173,7 @@
 
 (struct attribute
   ([start : location]
-   [local-name : String]
+   [local-name : Symbol]
    [prefix : (Option Symbol)]
    [value : (Option String)])
   #:transparent)

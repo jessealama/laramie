@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
 (provide ->html
-         ->xml)
+         html->xml)
 
 (require racket/require
          racket/pretty
@@ -29,56 +29,6 @@
 
 (module+ test
   (require typed/rackunit))
-
-(: render-character-stretch (-> (Listof (U Char String))
-                                String))
-(define (render-character-stretch tokens)
-  (cond [(null? tokens)
-         ""]
-        [(char? (car tokens))
-         (define stretch (takef tokens char?))
-         (define remainder (dropf tokens char?))
-         (string-append (list->string stretch)
-                        (render-character-stretch remainder))]
-        [(string? (car tokens))
-         (string-append (car tokens)
-                        (render-character-stretch (cdr tokens)))]))
-
-(: render-comment (-> comment-token comment))
-(define (render-comment token)
-  (error "render-comment: Not defined"))
-
-(: render-attr-value (-> quoted-attr-value
-                         (Option String)))
-(define (render-attr-value value)
-  (error "render-attr-value: Not defined yet"))
-
-(: render-doctype (-> doctype-token
-                      document-type))
-(define (render-doctype token)
-  (error "render-doctype: Not defined yet"))
-
-(: render-attribute (-> attribute-node
-                        (List Symbol String)))
-(define (render-attribute a)
-  (define local (attribute-node-local-name a))
-  (define value (attribute-node-value a))
-  (define full-name
-    (match (attribute-node-prefix a)
-      [(? string? p) (format "~a:~a" p local)]
-      [_ local]))
-  (cond [(eq? #f value)
-         (list (string->symbol full-name)
-               full-name)]
-        [else
-         (list (string->symbol full-name)
-               value)]))
-
-(: char-or-string? (-> (U doctype-node ElementNodeChild)
-                       Boolean))
-(define (char-or-string? x)
-  (or (char? x)
-      (string? x)))
 
 (: find-character-stretch (-> (Listof (U doctype-node ElementNodeChild))
                               (Listof (U Char String))))
@@ -211,7 +161,9 @@
   (define token (attribute-node-token attr))
   (define value (attribute-token-value token))
   (attribute (span-start token)
-             (character-tokens->string (attribute-token-name token))
+             (string->symbol
+              (character-tokens->string
+               (attribute-token-name token)))
              #f
              (cond [(eq? #f value) #f]
                    [else (quoted-attr->string value)])))
@@ -343,6 +295,41 @@
                           (text-stretch->string stretch))
                (element-children->xml (drop kids (length stretch))))]))
 
+(: html-element-children->xml-element-children
+   (-> (Listof (U element
+                  comment
+                  String))
+       (Listof (U xml:element
+                  xml:comment
+                  xml:cdata))))
+(define (html-element-children->xml-element-children kids)
+  (cond [(null? kids)
+         (list)]
+        [(element? (car kids))
+         (cons (html-element->xml-element (car kids))
+               (html-element-children->xml-element-children (cdr kids)))]
+        [(comment? (car kids))
+         (cons (html-comment->xml-comment (car kids))
+               (html-element-children->xml-element-children (cdr kids)))]
+        [else
+         (define kid (car kids))
+         (cons (xml:cdata (xml:location 1 0 0)
+                          (xml:location 1 0 0)
+                          kid)
+               (html-element-children->xml-element-children (cdr kids)))]))
+
+(: html-attribute->xml-attribute (-> attribute
+                                     xml:attribute))
+(define (html-attribute->xml-attribute attr)
+  (define start (attribute-start attr))
+  (define value (attribute-value attr))
+  (define name (attribute-local-name attr))
+  (xml:attribute (location->xml-location start)
+                 (location->xml-location start)
+                 name
+                 (cond [(eq? #f value) (symbol->string name)]
+                       [else value])))
+
 (: element-children->xexprs (-> (Listof (U element-node
                                            comment-node
                                            character-token
@@ -439,6 +426,53 @@
                        (element-node->xml-element element)
                        (map comment-node->xml-comment (filter comment-node? after-element)))]))
 
+(: html-comment->xml-comment (-> comment
+                                 xml:comment))
+(define (html-comment->xml-comment c)
+  (xml:comment (comment-content c)))
+
+(: html-document-type->xml-document-type (-> document-type
+                                             xml:document-type))
+(define (html-document-type->xml-document-type d)
+  (define name (document-type-name d))
+  (define system (document-type-system d))
+  (define public (document-type-system d))
+  (xml:document-type name
+                     (cond [(and (eq? #f system)
+                                 (eq? #f public))
+                            (xml:external-dtd/system "")]
+                           [(eq? #f system)
+                            (xml:external-dtd/public public "")]
+                           [else
+                            (xml:external-dtd/public public system)])
+                     #f))
+
+(: html-prolog->xml-prolog (-> prolog
+                               xml:prolog))
+(define (html-prolog->xml-prolog pro)
+  (define dt (prolog-dtd pro))
+  (xml:prolog (map html-comment->xml-comment (prolog-misc pro))
+              (cond [(eq? #f dt) #f]
+                    [else (html-document-type->xml-document-type dt)])
+              (list)))
+
+(: html-element->xml-element (-> element
+                                 xml:element))
+(define (html-element->xml-element elem)
+  (define start (element-start elem))
+  (xml:element (location->xml-location start)
+               (location->xml-location start)
+               (element-local-name elem)
+               (map html-attribute->xml-attribute (element-attributes elem))
+               (html-element-children->xml-element-children (element-content elem))))
+
+(: html->xml (-> document
+                 xml:document))
+(define (html->xml doc)
+  (xml:document (html-prolog->xml-prolog (document-prolog doc))
+                (html-element->xml-element (document-element doc))
+                (map html-comment->xml-comment (document-misc doc))))
+
 (: ->xexpr (-> document-node
                XExpr))
 (define (->xexpr doc)
@@ -450,21 +484,3 @@
          (error "Failed to find a root element")]
         [else
          (element-node->xexpr element)]))
-
-(module+ main
-  (require racket/cmdline
-           racket/pretty
-           racket/port
-           typed/racket/unsafe
-           (file "parser.rkt"))
-  (unsafe-require/typed
-   net/http-easy
-   [get (->* (Any)
-             (#:timeouts Any)
-             Any)]
-   [response-body (-> Any Bytes)])
-  (define url (command-line #:args (url)
-                            url))
-  (define r (response-body (get (format "~a" url))))
-  (unless (eq? #f r)
-    (pretty-print (->xexpr (parser-state-document (parse r))))))
