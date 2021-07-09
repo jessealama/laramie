@@ -1,11 +1,10 @@
-#lang typed/racket/base
+#lang racket/base
 
 (require laramie
          (file "util.rkt"))
 
 (module+ test
-  (require typed/rackunit
-           racket/format))
+  (require rackunit))
 
 (define html #<<HTML
 <!doctype html>
@@ -16,7 +15,7 @@
 HTML
 )
 
-(define state (parse html))
+(define doc (parse html))
 
 (module+ test
   (test-begin

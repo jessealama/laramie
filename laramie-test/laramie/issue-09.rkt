@@ -1,10 +1,9 @@
-#lang typed/racket/base
+#lang racket/base
 
 (require laramie)
 
 (module+ test
-  (require typed/rackunit
-           racket/format))
+  (require rackunit))
 
 (module+ test
   (let ([test-name "issues/9"])

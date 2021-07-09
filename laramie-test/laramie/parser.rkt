@@ -1,32 +1,24 @@
-#lang typed/racket/base
+#lang racket/base
 
 (require laramie)
 
 (module+ test
-  (require typed/rackunit
-           racket/format))
+  (require rackunit
+           (file "util.rkt")))
 
 (module+ test
   (let* ([test-name "Comment and doctype"]
          [result (parse "<!--xyz--><!doctype html>")]
-         [document (parser-state-document result)]
-         [dropped (parser-state-dropped result)]
-         [doc-children (document-node-children document)])
+         [p (document-prolog result)])
     (test-begin
       (test-case
-          (string-append test-name " [dropped 0 tokens]")
-        (check-length dropped 0))
+          (string-append test-name " [one comment")
+        (check-= (length (prolog-misc p))
+                 1
+                 0))
       (test-case
-          (string-append " [two children of the document]")
-        (check-length doc-children 2))
-      (test-case
-          (string-append " [first child is comment node]")
-        (check-true (comment-node? (car doc-children))
-                    (~a (car doc-children))))
-      (test-case
-          (string-append test-name " [second child is doctype node]")
-        (check-true (doctype-node? (cadr doc-children))
-                    (~a (cadr doc-children)))))))
+          (string-append test-name " [one DTD")
+        (check-not-false (prolog-dtd p) 1)))))
 
 ; TODO (not close to working yet)
 #;

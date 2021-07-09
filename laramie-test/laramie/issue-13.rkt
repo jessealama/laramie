@@ -1,17 +1,9 @@
-#lang typed/racket/base
+#lang racket/base
 
-(require (file "../src/types.rkt")
-         (file "../src/tokenize.rkt")
-         (file "../src/parser.rkt")
-         (file "../src/parameters.rkt")
-         (file "../src/stream.rkt")
-         (file "../src/parser.rkt")
-         (file "../src/dom.rkt")
-         (file "../src/data.rkt"))
+(require laramie)
 
 (module+ test
-  (require typed/rackunit
-           racket/format))
+  (require rackunit))
 
 (module+ test
   (let* ([test-name "Bootstrap starter template is parsable"]
