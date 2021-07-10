@@ -14,17 +14,6 @@
                    ("types.rkt"
                     "tokens.rkt")))
 
-(unsafe-require/typed
- txexpr
- [txexpr (-> Symbol
-             (Listof (List Symbol String))
-             (Listof XExpr)
-             XExpr)]
- [txexpr* (-> Symbol
-              (Listof (List Symbol String))
-              XExpr *
-              XExpr)])
-
 (module+ test
   (require typed/rackunit))
 

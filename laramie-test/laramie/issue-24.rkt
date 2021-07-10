@@ -15,4 +15,4 @@ DOC
 )
 
 (module+ test
-  (check-not-false (member "foobar" (strings-in-elements (parse document)))))
+  (check-not-false (member "foobar" (descendants (parse document)))))

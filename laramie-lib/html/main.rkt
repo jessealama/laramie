@@ -2,6 +2,8 @@
 
 (provide html->xml
 
+         descendants
+
          (struct-out document-type)
          (struct-out prolog)
          (struct-out document)
@@ -10,4 +12,5 @@
          (struct-out attribute))
 
 (require (file "convert.rkt")
-         (file "types.rkt"))
+         (file "types.rkt")
+         (file "util.rkt"))

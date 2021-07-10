@@ -1,5 +1,7 @@
 #lang typed/racket/base
 
+(provide descendants)
+
 (require (file "types.rkt"))
 
 (: descendants (-> (U String

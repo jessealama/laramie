@@ -7,14 +7,6 @@
          ParserResult
          InsertionMode
 
-         ; HTML
-         (struct-out document-type)
-         (struct-out prolog)
-         (struct-out document)
-         (struct-out comment)
-         (struct-out element)
-         (struct-out attribute)
-
          ; DOM-y data
          (struct-out element-node)
          (struct-out attribute-node)
@@ -135,48 +127,6 @@
    [namespace : (Option String)]
    [induced? : Boolean])
   #:mutable #:transparent)
-
-;; HTML5 data à la XML
-
-(struct document-type
-  ([start : location]
-   [name : Symbol]
-   [system : (Option String)]
-   [public : (Option String)])
-  #:transparent)
-
-(struct prolog
-  ([misc : (Listof comment)]
-   [dtd : (Option document-type)])
-  #:transparent)
-
-(struct document
-  ([prolog : prolog]
-   [element : element]
-   [misc : (Listof comment)])
-  #:transparent)
-
-(struct comment
-  ([start : location]
-   [content : String])
-  #:transparent)
-
-(struct element
-  ([start : location]
-   [local-name : Symbol]
-   [prefix : (Option Symbol)]
-   [attributes : (Listof attribute)]
-   [content : (Listof (U element
-                         comment
-                         String))])
-  #:transparent)
-
-(struct attribute
-  ([start : location]
-   [local-name : Symbol]
-   [prefix : (Option Symbol)]
-   [value : (Option String)])
-  #:transparent)
 
 (define-type XExpr
   (U String

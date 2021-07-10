@@ -1,7 +1,6 @@
 #lang typed/racket/base
 
-(provide ->html
-         html->xml)
+(provide ->html)
 
 (require racket/require
          racket/pretty
@@ -12,6 +11,8 @@
          (file "types.rkt")
          (file "dom.rkt")
          (prefix-in xml: (file "xml.rkt"))
+         (multi-in "../html"
+                   ("types.rkt"))
          (multi-in "../tokenizer"
                    ("types.rkt"
                     "tokens.rkt")))
@@ -465,13 +466,6 @@
                (element-local-name elem)
                (map html-attribute->xml-attribute (element-attributes elem))
                (html-element-children->xml-element-children (element-content elem))))
-
-(: html->xml (-> document
-                 xml:document))
-(define (html->xml doc)
-  (xml:document (html-prolog->xml-prolog (document-prolog doc))
-                (html-element->xml-element (document-element doc))
-                (map html-comment->xml-comment (document-misc doc))))
 
 (: ->xexpr (-> document-node
                XExpr))

@@ -16,17 +16,13 @@ DOC
 )
 
 (define (script-element? x)
-  (and (element-node? x)
-       (string=? "script"
-                 (element-node-name x))))
+  (and (element? x)
+       (string=? "script" (element-local-name x))))
 
 (module+ test
-  (define elements (enumerate-elements (parse document)))
+  (define elements (filter element? (descendants (parse document))))
   (define script-element (findf script-element? elements))
   (check-not-false script-element)
-  (define script-kiddies (element-node-children script-element))
+  (define script-kiddies (element-content script-element))
   (check-equal? script-kiddies
-                (list
-                 (string-token (location 4 8 39)
-                               (location 4 12 43)
-                               "hey!"))))
+                (list "hey!")))

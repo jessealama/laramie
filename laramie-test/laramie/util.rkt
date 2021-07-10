@@ -1,7 +1,6 @@
 #lang racket/base
 
-(provide check-length
-         descendants)
+(provide check-length)
 
 (require syntax/parse/define
          rackunit)

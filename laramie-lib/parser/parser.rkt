@@ -4,17 +4,22 @@
 
 (require racket/list
          racket/port
-         (file "../tokenizer/main.rkt")
+         racket/require
          (file "types.rkt")
-         (file "../tokenizer/types.rkt")
-         (file "../tokenizer/tokens.rkt")
-         (file "../tokenizer/tokenize.rkt")
          (file "dom.rkt")
          (file "parameters.rkt")
          (file "convert.rkt")
-         (file "../tokenizer/parameters.rkt")
-         (file "../tokenizer/stream.rkt")
-         (file "../private/todo.rkt"))
+         (multi-in "../tokenizer"
+                   ("parameters.rkt"
+                    "stream.rkt"
+                    "types.rkt"
+                    "tokens.rkt"
+                    "tokenize.rkt"
+                    "main.rkt"))
+         (multi-in "../private"
+                   ("todo.rkt"))
+         (multi-in "../html"
+                   ("types.rkt")))
 
 (: keep-popping (-> (U String (Listof String))
                     Void))
