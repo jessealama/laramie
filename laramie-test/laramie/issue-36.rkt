@@ -17,7 +17,7 @@ DOC
 
 (define (script-element? x)
   (and (element? x)
-       (string=? "script" (element-local-name x))))
+       (equal? 'script (element-local-name x))))
 
 (module+ test
   (define elements (filter element? (descendants (parse document))))
