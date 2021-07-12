@@ -17,31 +17,8 @@
                    ("types.rkt"
                     "tokens.rkt")))
 
-(unsafe-require/typed
- txexpr
- [txexpr (-> Symbol
-             (Listof (List Symbol String))
-             (Listof XExpr)
-             XExpr)]
- [txexpr* (-> Symbol
-              (Listof (List Symbol String))
-              XExpr *
-              XExpr)])
-
 (module+ test
   (require typed/rackunit))
-
-(: find-character-stretch (-> (Listof (U doctype-node ElementNodeChild))
-                              (Listof (U Char String))))
-(define (find-character-stretch kids)
-  (cond [(null? kids)
-         (list)]
-        [(or (char? (car kids))
-             (string? (car kids)))
-         (cons (car kids)
-               (find-character-stretch (cdr kids)))]
-        [else
-         (list)]))
 
 (: partition-prolog-children (->* ((Listof (U comment-node doctype-node)))
                                   ((Listof comment-node)
@@ -230,18 +207,6 @@
                attrs
                content))
 
-(: element-node->xexpr (-> element-node
-                           XExpr))
-(define (element-node->xexpr elem)
-  (define token (element-node-token elem))
-  (define start (span-start (tag-token-less-than token)))
-  (define name (character-tokens->string (tag-token-name token)))
-  (define attrs (map attribute-node->xexpr-attribute (element-node-attributes elem)))
-  (define content (element-children->xexprs (element-node-children elem)))
-  (txexpr (string->symbol name)
-          attrs
-          content))
-
 (: element-children->html (-> (Listof (U element-node
                                          comment-node
                                          character-token
@@ -330,30 +295,6 @@
                  name
                  (cond [(eq? #f value) (symbol->string name)]
                        [else value])))
-
-(: element-children->xexprs (-> (Listof (U element-node
-                                           comment-node
-                                           character-token
-                                           character-reference-token
-                                           string-token))
-                                (Listof XExpr)))
-(define (element-children->xexprs kids)
-  (cond [(null? kids)
-         (list)]
-        [(element-node? (car kids))
-         (cons (element-node->xexpr (car kids))
-               (element-children->xexprs (cdr kids)))]
-        [(comment-node? (car kids)) ; drop comments:
-         (element-children->xexprs (cdr kids))]
-        [else
-         (define kid (car kids))
-         (define start (span-start kid))
-         (define stretch (takef kids (lambda (x)
-                                       (or (character-token? x)
-                                           (character-reference-token? x)
-                                           (string-token? x)))))
-         (cons (text-stretch->string stretch)
-               (element-children->xexprs (drop kids (length stretch))))]))
 
 (: ->html (-> document-node
               document))
@@ -466,15 +407,3 @@
                (element-local-name elem)
                (map html-attribute->xml-attribute (element-attributes elem))
                (html-element-children->xml-element-children (element-content elem))))
-
-(: ->xexpr (-> document-node
-               XExpr))
-(define (->xexpr doc)
-  (define doc-partitions (partition-document-children (document-node-children doc)))
-  (define before-element (first doc-partitions))
-  (define element (second doc-partitions))
-  (define after-element (third doc-partitions))
-  (cond [(eq? #f element)
-         (error "Failed to find a root element")]
-        [else
-         (element-node->xexpr element)]))

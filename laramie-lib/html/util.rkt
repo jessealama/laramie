@@ -15,7 +15,7 @@
                                  element)))
                    (Listof (U element
                               comment
-                              prolog
+                              document-type
                               String))))
 (define (descendants html-thing)
   (cond [(document? html-thing)
@@ -31,7 +31,7 @@
          (define dtd (prolog-dtd html-thing))
          (append (descendants misc)
                  (cond [(eq? #f dtd) (list)]
-                       [else (descendants dtd)]))]
+                       [else (cons dtd (descendants dtd))]))]
         [(or (document-type? html-thing)
              (comment? html-thing))
          (list)]

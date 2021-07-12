@@ -9,7 +9,7 @@
          racket/function
          typed/racket/unsafe
          (file "types.rkt")
-         (prefix-in xml: (file "xml.rkt"))
+         (prefix-in xml: (file "../private/xml.rkt"))
          (multi-in "../tokenizer"
                    ("types.rkt"
                     "tokens.rkt")))

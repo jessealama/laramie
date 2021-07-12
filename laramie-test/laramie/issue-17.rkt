@@ -18,11 +18,12 @@ HTML
 (define doc (parse html))
 
 (module+ test
+  (require racket/pretty)
   (test-begin
     (define doc-descendents (descendants doc))
     (test-case
         "Enough descendants found"
-      (check-length doc-descendents 5))
+      (check-length doc-descendents 7))
     (define doctype-descendants (filter document-type? doc-descendents))
     (define comment-descendants (filter comment? doc-descendents))
     (test-case
