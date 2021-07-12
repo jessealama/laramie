@@ -346,28 +346,6 @@
          (string-append (string-token-content (car stretch))
                         (text-stretch->string (cdr stretch)))]))
 
-(: ->xml (-> document-node
-             xml:document))
-(define (->xml doc)
-  (define doc-partitions (partition-document-children (document-node-children doc)))
-  (define before-element (first doc-partitions))
-  (define element (second doc-partitions))
-  (define after-element (third doc-partitions))
-  (cond [(eq? #f element)
-         (error "Failed to find a root element")]
-        [else
-         (define prolog-partitions (partition-prolog-children before-element))
-         (define before-doctype (first prolog-partitions))
-         (define doctype (second prolog-partitions))
-         (define after-doctype (third prolog-partitions))
-         (define p (xml:prolog (map comment-node->xml-comment before-doctype)
-                               (cond [(eq? #f doctype) #f]
-                                     [else (doctype-node->xml-document-type doctype)])
-                               (map comment-node->xml-comment after-doctype)))
-         (xml:document p
-                       (element-node->xml-element element)
-                       (map comment-node->xml-comment (filter comment-node? after-element)))]))
-
 (: html-comment->xml-comment (-> comment
                                  xml:comment))
 (define (html-comment->xml-comment c)

@@ -114,16 +114,10 @@
 
 (: switch-mode (-> InsertionMode Void))
 (define (switch-mode new-mode)
-  (define s (current-parser-state))
-  (define modes (parser-state-insertion-mode s))
-  (define new-modes (cond [(null? modes)
-                           (list new-mode)]
-                          [else
-                           (cons new-mode modes)]))
   (current-parser-state
    (struct-copy parser-state
-                s
-                [insertion-mode new-modes])))
+                (current-parser-state)
+                [insertion-mode (list new-mode)])))
 
 (: push-insertion-mode (-> InsertionMode Void))
 (define (push-insertion-mode mode)
@@ -2565,10 +2559,10 @@
 (: keep-parsing (-> Void))
 (define (keep-parsing)
   (parse/1)
-  (cond [(eof-object? (peek-char-or-special))
-         (stop-parsing)]
-        [else
-         (keep-parsing)]))
+  (define s (current-parser-state))
+  (define mode (parser-state-insertion-mode s))
+  (unless (null? mode)
+    (keep-parsing)))
 
 (: parse (-> (U String Bytes)
              document))
@@ -2585,16 +2579,10 @@
 
 (: stop-parsing (-> Void))
 (define (stop-parsing)
-  (define s (current-parser-state))
-  (define modes (parser-state-insertion-mode s))
-  (define next-modes (cond [(null? modes)
-                            (list)]
-                           [else
-                            (cdr modes)]))
   (current-parser-state
    (struct-copy parser-state
-                s
-                [insertion-mode next-modes])))
+                (current-parser-state)
+                [insertion-mode (list)])))
 
 (module+ main
   (require racket/cmdline

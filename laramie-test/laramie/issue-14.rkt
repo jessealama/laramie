@@ -24,9 +24,10 @@ BOOTSTRAP
   (let* ([test-name "Issue 14: Simple warmup to Bootstrap starter template"]
          [result (parse simple-html)]
          [root (document-element result)]
-         [doc-children (filter element? (element-content root))])
+         [doc-children (filter element? (descendants result))])
+    (log-error "result: ~a" result)
     (test-begin
-      (check-length doc-children 1)
+      (check-length doc-children 3)
       (define html-node (car doc-children))
       (test-case
           "html node present"
