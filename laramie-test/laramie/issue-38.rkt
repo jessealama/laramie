@@ -25,7 +25,7 @@ DOC
 
 (define (style-element? x)
   (and (element? x)
-       (string=? "style" (element-local-name x))))
+       (equal? 'style (element-local-name x))))
 
 (define elements (filter element? (descendants (parse document))))
 
