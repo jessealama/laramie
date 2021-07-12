@@ -10,7 +10,7 @@
          typed/racket/unsafe
          (file "types.rkt")
          (file "dom.rkt")
-         (prefix-in xml: (file "xml.rkt"))
+         (prefix-in xml: (file "../private/xml.rkt"))
          (multi-in "../html"
                    ("types.rkt"))
          (multi-in "../tokenizer"
