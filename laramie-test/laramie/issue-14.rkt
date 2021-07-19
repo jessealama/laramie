@@ -25,9 +25,8 @@ BOOTSTRAP
          [result (parse simple-html)]
          [root (document-element result)]
          [doc-children (filter element? (descendants result))])
-    (log-error "result: ~a" result)
     (test-begin
-      (check-length doc-children 3)
+      (check-length doc-children 6)
       (define html-node (car doc-children))
       (test-case
           "html node present"

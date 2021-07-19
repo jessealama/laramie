@@ -12,12 +12,12 @@
          [p (document-prolog result)])
     (test-begin
       (test-case
-          (string-append test-name " [one comment")
+          (string-append test-name " [one comment]")
         (check-= (length (prolog-misc p))
                  1
                  0))
       (test-case
-          (string-append test-name " [one DTD")
+          (string-append test-name " [one DTD]")
         (check-not-false (prolog-dtd p) 1)))))
 
 ; TODO (not close to working yet)

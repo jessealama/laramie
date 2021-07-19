@@ -119,6 +119,15 @@
                 (current-parser-state)
                 [insertion-mode (list new-mode)])))
 
+(: push-mode! (-> InsertionMode Void))
+(define (push-mode! new-mode)
+  (define s (current-parser-state))
+  (define current-modes (parser-state-insertion-mode s))
+  (current-parser-state
+   (struct-copy parser-state
+                s
+                [insertion-mode (cons new-mode current-modes)])))
+
 (: push-insertion-mode (-> InsertionMode Void))
 (define (push-insertion-mode mode)
   (switch-mode mode))
@@ -184,7 +193,7 @@
     (switch-mode 'before-head))
   (define t (peek-token))
   (cond [(eq? #f t)
-         (stop-parsing)]
+         (fallback)]
         [(tokenizer-error? t)
          (raise-parse-error! t)
          (void (next-token))]
@@ -416,7 +425,7 @@
             (define n (next-token))
             (append-child! element)
             (push-tokenizer! RCDATA)
-            (switch-mode 'text)]
+            (push-mode! 'text)]
            [(tag-name-equals? t "noscript")
             (next-token)
             (append-child! element)
@@ -2579,10 +2588,15 @@
 
 (: stop-parsing (-> Void))
 (define (stop-parsing)
+  (define s (current-parser-state))
+  (define current-modes (parser-state-insertion-mode s))
   (current-parser-state
    (struct-copy parser-state
-                (current-parser-state)
-                [insertion-mode (list)])))
+                s
+                [insertion-mode (cond [(null? current-modes)
+                                       (list)]
+                                      [else
+                                       (cdr current-modes)])])))
 
 (module+ main
   (require racket/cmdline
