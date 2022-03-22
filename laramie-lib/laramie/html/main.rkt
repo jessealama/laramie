@@ -4,6 +4,7 @@
 
          descendants
 
+         (struct-out location)
          (struct-out document-type)
          (struct-out prolog)
          (struct-out document)

@@ -1,6 +1,7 @@
 #lang typed/racket/base
 
-(provide (struct-out document-type)
+(provide (struct-out location)
+         (struct-out document-type)
          (struct-out prolog)
          (struct-out document)
          (struct-out comment)
