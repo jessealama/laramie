@@ -440,6 +440,9 @@
         [(stream-error? token)
          ; character missing
          (list)]
+        [(character-reference-token? token)
+         (enumerate-output-characters
+          (character-reference-token-characters token))]
         [else
          (error (format "Unable to handle token ~a" token))]))
 

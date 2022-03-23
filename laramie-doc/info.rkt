@@ -3,10 +3,9 @@
 (define collection "laramie")
 
 (define build-deps '("scribble-lib"
-                     "laramie-lib"
                      "racket-doc"))
 
-(define deps '("base"))
+(define deps '("base" "laramie-lib"))
 
 (define update-implies '("laramie-lib"))
 
