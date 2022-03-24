@@ -6,8 +6,6 @@
 @title[#:style "toc"]{Laramie—HTML5 for Racket}
 @author[(author+email "Jesse Alama" "jesse@serverracket.com")]
 
-@defmodule[laramie]
-
 Laramie is an HTML5 parser for Racket. Give it an HTML
 document in the form of a (byte) string or URL, get an xexpr
 as a result.
