@@ -1,7 +1,6 @@
 #lang scribble/manual
 
-@require[@for-label[racket/base
-		    laramie]]
+@require[@for-label[racket/base]]
 
 @title[#:style "toc"]{Laramie—HTML5 for Racket}
 @author[(author+email "Jesse Alama" "jesse@serverracket.com")]
