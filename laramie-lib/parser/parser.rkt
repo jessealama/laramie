@@ -359,7 +359,8 @@
   ; compleixty that goes along with that
   (append-child! element)
   (push-tokenizer! SCRIPT)
-  (switch-mode 'text))
+  (push-mode! 'in-head)
+  (push-mode! 'text))
 
 (: in-head:template (-> start-tag-token Void))
 (define (in-head:template token)
@@ -2590,13 +2591,14 @@
 (define (stop-parsing)
   (define s (current-parser-state))
   (define current-modes (parser-state-insertion-mode s))
+  (define next-modes (cond [(null? current-modes)
+                            (list)]
+                           [else
+                            (cdr current-modes)]))
   (current-parser-state
    (struct-copy parser-state
                 s
-                [insertion-mode (cond [(null? current-modes)
-                                       (list)]
-                                      [else
-                                       (cdr current-modes)])])))
+                [insertion-mode next-modes])))
 
 (module+ main
   (require racket/cmdline
