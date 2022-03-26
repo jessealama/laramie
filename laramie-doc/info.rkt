@@ -12,6 +12,6 @@
 
 (define pkg-desc "Documentation for Laramie")
 
-(define scribblings '(("laramie.scrbl")))
+(define scribblings '(("scribblings/laramie.scrbl")))
 
 (define authors '("jesse@serverracket.com"))

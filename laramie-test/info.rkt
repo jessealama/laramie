@@ -2,6 +2,8 @@
 
 (define collection "tests")
 
+(define deps '("laramie-lib"))
+
 (define build-deps '("base"
                      "laramie-lib"))
 

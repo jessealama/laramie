@@ -9,4 +9,5 @@
                "txexpr"
                "http-easy"))
 (define build-deps '("rackunit-lib"
-                     "rackunit-typed"))
+                     "rackunit-typed"
+                     "http-easy"))
