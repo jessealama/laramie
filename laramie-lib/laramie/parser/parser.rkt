@@ -112,8 +112,8 @@
                 #:namespace html-namespace
                 #:induced? #t))
 
-(: switch-mode (-> InsertionMode Void))
-(define (switch-mode new-mode)
+(: switch-mode! (-> InsertionMode Void))
+(define (switch-mode! new-mode)
   (current-parser-state
    (struct-copy parser-state
                 (current-parser-state)
@@ -128,9 +128,17 @@
                 s
                 [insertion-mode (cons new-mode current-modes)])))
 
-(: push-insertion-mode (-> InsertionMode Void))
-(define (push-insertion-mode mode)
-  (switch-mode mode))
+(: ensure-insertion-mode! (-> InsertionMode Void))
+(define (ensure-insertion-mode! mode)
+  (define s (current-parser-state))
+  (define current-modes (parser-state-insertion-mode s))
+  (when (or (null? current-modes)
+            (not (eq? mode (car current-modes))))
+    (push-mode! mode)))
+
+(: push-insertion-mode! (-> InsertionMode Void))
+(define (push-insertion-mode! mode)
+  (switch-mode! mode))
 
 (: consume-first-character (-> string-token
                                Boolean
@@ -162,13 +170,13 @@
                [(string-starts-with-whitespace? t)
                 (consume-first-character t #f)]
                [else
-                (switch-mode 'before-html)])]
+                (switch-mode! 'before-html)])]
         [(or (character-token? t)
              (character-reference-token? t))
          (cond [(whitespace-token? t)
                 (void (next-token))]
                [else
-                (switch-mode 'before-html)])]
+                (switch-mode! 'before-html)])]
         [(comment-token? t)
          (next-token)
          (define node (make-comment-node #:token t))
@@ -179,9 +187,9 @@
          (append-child! node)
          (when (doctype-token-is-quirky? t)
            (turn-on-quirks!))
-         (switch-mode 'before-html)]
+         (switch-mode! 'before-html)]
         [else
-         (switch-mode 'before-html)]))
+         (switch-mode! 'before-html)]))
 
 ; https://html.spec.whatwg.org/multipage/parsing.html#the-before-html-insertion-mode
 (: before-html (-> Void))
@@ -190,7 +198,7 @@
   (define (fallback)
     (define node (induce-element "html"))
     (append-child! node)
-    (switch-mode 'before-head))
+    (switch-mode! 'before-head))
   (define t (peek-token))
   (cond [(eq? #f t)
          (fallback)]
@@ -221,7 +229,7 @@
          (next-token)
          (define node (tag->element t))
          (append-child! node)
-         (switch-mode 'before-head)]
+         (switch-mode! 'before-head)]
         [(and (end-tag-token? t)
               (tag-has-name? t (list "head"
                                      "body"
@@ -291,7 +299,7 @@
     (define node (induce-element "head"))
     (append-child! node)
     (set-current-head! node)
-    (switch-mode 'in-head))
+    (switch-mode! 'in-head))
   (define t (peek-token))
   (cond [(eq? #f t)
          (stop-parsing)]
@@ -327,7 +335,7 @@
          (append-child! node)
          (check-top-element "head")
          (set-current-head! node)
-         (switch-mode 'in-head)]
+         (switch-mode! 'in-head)]
         [(and (end-tag-token? t)
               (tag-has-name? t (list "head"
                                      "body"
@@ -339,6 +347,13 @@
          (drop-token! t)]
         [else
          (fallback)]))
+
+(: current-insertion-mode (-> (Option InsertionMode)))
+(define (current-insertion-mode)
+  (define s (current-parser-state))
+  (define m (parser-state-insertion-mode s))
+  (cond [(null? m) #f]
+        [else (car m)]))
 
 (: check-top-element (-> String Void))
 (define (check-top-element name)
@@ -359,7 +374,6 @@
   ; compleixty that goes along with that
   (append-child! element)
   (push-tokenizer! SCRIPT)
-  (push-mode! 'in-head)
   (push-mode! 'text))
 
 (: in-head:template (-> start-tag-token Void))
@@ -434,13 +448,14 @@
                    (push-tokenizer! RAWTEXT)]
                   [else
                    (append-child! element)
-                   (switch-mode 'in-head-noscript)]]]
+                   (switch-mode! 'in-head-noscript)]]]
            [(tag-name-equals? t (list "noframes" "style"))
             (next-token)
             (append-child! element)
             (push-tokenizer! RAWTEXT)
-            (switch-mode 'text)]
+            (switch-mode! 'text)]
            [(tag-name-equals? t "script")
+            (push-mode! 'in-head)
             (in-head:script t)]
            [(tag-name-equals? t "template")
             (in-head:template t)]
@@ -462,22 +477,22 @@
                                                         "template"
                                                         "head")
                                                   #f))
-            (switch-mode 'after-head)])]
+            (switch-mode! 'after-head)])]
         [(end-tag-token? t)
-         (check-top-element "head")
+         #;(check-top-element "head")
          (define open (current-open-elements))
          (pop-open-element!)
          (cond [(tag-name-equals? t "head")
                 (next-token)
-                (switch-mode 'after-head)]
+                (switch-mode! 'after-head)]
                [(tag-name-equals? t (list "html" "body" "br"))
-                (switch-mode 'after-head)]
+                (switch-mode! 'after-head)]
                [else
                 (next-token)
                 (raise-parse-error! (closing-tag-not-in-scope t open))])]
         [else
          (check-top-element "head")
-         (switch-mode 'after-head)]))
+         (switch-mode! 'after-head)]))
 
 ; https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inheadnoscript
 (: in-head-noscript (-> Void))
@@ -495,7 +510,7 @@
     (check-top-element "noscript")
     (pop-open-element!)
     (check-top-element "head")
-    (switch-mode 'in-head))
+    (switch-mode! 'in-head))
   (define t (peek-token))
   (cond [(eq? #f t)
          (fallback t)]
@@ -528,7 +543,7 @@
                        (pop-open-element!)
                        (check-top-element "head")
                        (next-token)
-                       (switch-mode 'in-head)]
+                       (switch-mode! 'in-head)]
                       [(string=? name "br")
                        (fallback t)]
                       [else
@@ -598,7 +613,7 @@
     (raise-parse-error! (element-induced "body"))
     (define element (induce-element "body"))
     (append-child! element)
-    (switch-mode 'in-body))
+    (switch-mode! 'in-body))
   (define t (peek-token))
   (cond [(eq? #f t)
          (fallback)]
@@ -639,10 +654,10 @@
                       [(string=? name "body")
                        (append-child! element)
                        (frameset-ok? #f)
-                       (switch-mode 'in-body)]
+                       (switch-mode! 'in-body)]
                       [(string=? name "frameset")
                        (append-child! element)
-                       (switch-mode 'in-frameset)]
+                       (switch-mode! 'in-frameset)]
                       [(member name (list
                                      "base" "basefont" "bgsound"
                                      "link" "meta" "noframes"
@@ -744,7 +759,7 @@
                        ; we do not support fragment parsing,
                        ; so this is not exactly what the
                        ; spec says:
-                       (switch-mode 'after-frameset)])]
+                       (switch-mode! 'after-frameset)])]
                [else
                 (next-token)
                 (raise-parse-error! (unexpected-token t #f #f))])]
@@ -797,7 +812,7 @@
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #f))])]
                [(string=? name "html")
-                (switch-mode 'after-after-frameset)]
+                (switch-mode! 'after-after-frameset)]
                [else
                 (next-token)
                 (raise-parse-error! (unexpected-token t #f #f))])]
@@ -872,7 +887,7 @@
          (keep-popping "template")
          (clear-formatting-elements!)
          (pop-template-insertion-modes!)
-         (switch-mode (find-appropriate-insertion-mode))]
+         (switch-mode! (find-appropriate-insertion-mode))]
         [else
          (raise-parse-error! (unexpected-token t #f #f))
          (fallback)]))
@@ -935,6 +950,7 @@
                               "script" "style" "template"
                               "title")
                         string=?)
+                #;(ensure-insertion-mode! 'in-body)
                 (in-head t)]
                [(string=? name "body")
                 (next-token)
@@ -965,7 +981,7 @@
                       [else
                        (set-current-open-elements! (list (last open)))
                        (append-child! element)
-                       (switch-mode 'in-frameset)])]
+                       (switch-mode! 'in-frameset)])]
                [(member name (list "address" "article" "aside" "blockquote" "center" "details" "dialog" "dir" "div" "dl" "fieldset" "figcaption" "figure" "footer" "header" "hgroup" "main" "menu" "nav" "ol" "p" "section" "summary" "ul") string=?)
                 (next-token)
                 (when (p-element-in-button-scope?)
@@ -1173,8 +1189,7 @@
                             (string-starts-with-null-character? next))
                        (consume-first-character next #f)])
                 (push-tokenizer! RCDATA)
-                (push-insertion-mode 'in-body)
-                (switch-mode 'text)]
+                (switch-mode! 'text)]
                [(string=? name "xmp")
                 (next-token)
                 (when (p-element-in-button-scope?)
@@ -1200,7 +1215,7 @@
                 (frameset-ok? #f)
                 ; doesn't seem to be quite right
                 ; how do we get back to the in-body insertion mode?
-                (switch-mode 'in-select)]
+                (switch-mode! 'in-select)]
                [(member name (list "optgroup" "option") string=?)
                 (next-token)
                 (define top (current-top-open-element))
@@ -1266,7 +1281,7 @@
                          (raise-parse-error! (unexpected-token t #f #f)))
                        (next-token)
                        (pop-open-element!)
-                       (switch-mode 'after-body)])]
+                       (switch-mode! 'after-body)])]
                [(string=? name "html")
                 (cond [(not (element-in-scope? "body"))
                        (next-token)
@@ -1274,7 +1289,7 @@
                       [else
                        (when (error-node-at-eof?)
                          (raise-parse-error! (unexpected-token t #f #f)))
-                       (switch-mode 'after-body)])]
+                       (switch-mode! 'after-body)])]
                [(member name (list "address" "article" "aside" "blockquote" "center" "details" "dialog" "dir" "div" "dl" "fieldset" "figcaption" "figure" "footer" "header" "hgroup" "main" "menu" "nav" "ol" "pre" "section" "summary" "ul") string=?)
                 (cond [(not (member name
                                     (map (lambda ([n : element-node])
@@ -1481,20 +1496,20 @@
                 (when (or (not (currently-parsing-fragment?))
                           (select-element-in-select-scope?))
                   (keep-popping "select")
-                  (switch-mode (find-appropriate-insertion-mode)))]
+                  (switch-mode! (find-appropriate-insertion-mode)))]
                [(member name (list "input" "keygen" "textarea") string=?)
                 ; do not go to the next token
                 (raise-parse-error! (unexpected-token t #f #f))
                 (when (or (not (currently-parsing-fragment?))
                           (select-element-in-select-scope?))
                   (keep-popping "select")
-                  (switch-mode (find-appropriate-insertion-mode)))]
+                  (switch-mode! (find-appropriate-insertion-mode)))]
                [(string=? name "script")
                 (in-head t)
-                (switch-mode 'in-select)]
+                (switch-mode! 'in-select)]
                [(string=? name "template")
                 (in-head t)
-                (switch-mode 'in-select)]
+                (switch-mode! 'in-select)]
                [else
                 (next-token)
                 (raise-parse-error! (unexpected-token t #f #t))])]
@@ -1523,7 +1538,7 @@
                        (raise-parse-error! (unexpected-token t #f #t))]
                       [else
                        (keep-popping "select")
-                       (switch-mode (find-appropriate-insertion-mode))])]
+                       (switch-mode! (find-appropriate-insertion-mode))])]
                [(string=? name "template")
                 (in-body:template-end-tag t in-select)]
                [else
@@ -1555,7 +1570,7 @@
                                                                     (substring (string-token-content t) 0 1))
                                                       #f
                                                       #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [(or (character-token? t)
              (character-reference-token? t))
          (cond [(whitespace-token? t)
@@ -1564,7 +1579,7 @@
                 (insert-character! t)]
                [else
                 (raise-parse-error! (unexpected-token t #f #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [(comment-token? t)
          (next-token)
          (define node (make-comment-node #:token t))
@@ -1584,7 +1599,7 @@
                     (set-current-node! enriched)))]
                [else
                 (raise-parse-error! (unexpected-token t #f #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [(end-tag-token? t)
          (define name (list->string (enumerate-output-characters (tag-token-name t))))
          (cond [(string=? name "html")
@@ -1593,10 +1608,10 @@
                        (raise-parse-error! (unexpected-token t #f #t))]
                       [else
                        (pop-open-element!)
-                       (switch-mode 'after-after-body)])]
+                       (switch-mode! 'after-after-body)])]
                [else
                 (raise-parse-error! (unexpected-token t #f #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [else
          (error (format "[after-body] Cannot handle token: ~a" t))]))
 
@@ -1630,7 +1645,7 @@
                                                                     (substring (string-token-content t) 0 1))
                                                       #f
                                                       #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [(or (character-token? t)
              (character-reference-token? t))
          (cond [(whitespace-token? t)
@@ -1639,7 +1654,7 @@
                 (insert-character! t)]
                [else
                 (raise-parse-error! (unexpected-token t #f #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [(start-tag-token? t)
          (cond [(string=? "html" (list->string (enumerate-output-characters (tag-token-name t))))
                 (next-token)
@@ -1651,7 +1666,7 @@
                     (set-current-node! enriched)))]
                [else
                 (raise-parse-error! (unexpected-token t #f #f))
-                (switch-mode 'in-body)])]
+                (switch-mode! 'in-body)])]
         [else
          (error (format "[after-after-body] Cannot handle token ~a" t))]))
 
@@ -1983,8 +1998,8 @@
                   (character-reference-token? t)
                   (string-token? t))
               (current-node-has-name? (list "table" "tbody" "tfoot" "thead" "tr")))
-         (push-insertion-mode 'in-table)
-         (switch-mode 'in-table-text)]
+         (push-insertion-mode! 'in-table)
+         (switch-mode! 'in-table-text)]
         [(comment-token? t)
          (next-token)
          (define node (make-comment-node #:token t))
@@ -2000,28 +2015,28 @@
                 (clear-back-to-table)
                 (insert-marker!)
                 (append-child! element)
-                (switch-mode 'in-caption)]
+                (switch-mode! 'in-caption)]
                [(string=? name "colgroup")
                 (next-token)
                 (clear-back-to-table)
                 (append-child! element)
-                (switch-mode 'in-column-group)]
+                (switch-mode! 'in-column-group)]
                [(string=? name "col")
                 (raise-parse-error! (element-induced "colgroup"))
                 (define col (induce-element "colgroup"))
                 (append-child! col)
-                (switch-mode 'in-column-group)]
+                (switch-mode! 'in-column-group)]
                [(member name (list "tbody" "tfoot" "thead") string=?)
                 (next-token)
                 (clear-back-to-table)
                 (append-child! element)
-                (switch-mode 'in-table-body)]
+                (switch-mode! 'in-table-body)]
                [(member name (list "td" "th" "tr") string=?)
                 (clear-back-to-table)
                 (raise-parse-error! (element-induced "tbody"))
                 (define tbody (induce-element "tbody"))
                 (append-child! tbody)
-                (switch-mode 'in-table-body)]
+                (switch-mode! 'in-table-body)]
                [(string=? name "style")
                 (in-head t)]
                [(string=? name "script")
@@ -2056,7 +2071,7 @@
          (cond [(string=? name "table")
                 (cond [(table-element-in-table-scope?)
                        (keep-popping "table")
-                       (switch-mode (reset-insertion-mode-appropriately))]
+                       (switch-mode! (reset-insertion-mode-appropriately))]
                       [else
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #t))])]
@@ -2157,17 +2172,17 @@
                 (next-token)
                 (clear-back-to-table)
                 (append-child! element)
-                (switch-mode 'in-row)]
+                (switch-mode! 'in-row)]
                [(member name (list "th" "td") string=?)
                 (raise-parse-error! (element-induced "tr"))
                 (define tr (induce-element "tr"))
                 (append-child! tr)
-                (switch-mode 'in-row)]
+                (switch-mode! 'in-row)]
                [(member name (list "caption" "col" "colgroup" "tbody" "tfoot" "thead") string=?)
                 (cond [(element-in-scope? (list "tbody" "thead" "tfoot"))
                        (clear-back-to-table)
                        (pop-open-element!)
-                       (switch-mode 'in-table)]
+                       (switch-mode! 'in-table)]
                       [else
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #t))])]
@@ -2180,14 +2195,14 @@
                 (cond [(element-in-scope? name)
                        (clear-back-to-table)
                        (pop-open-element!)
-                       (switch-mode 'in-table)]
+                       (switch-mode! 'in-table)]
                       [else
                        (raise-parse-error! (closing-tag-not-in-scope t (current-open-elements)))])]
                [(string=? name "table")
                 (cond [(element-in-scope? (list "tbody" "thead" "tfoot"))
                        (clear-back-to-table)
                        (pop-open-element!)
-                       (switch-mode 'in-table)]
+                       (switch-mode! 'in-table)]
                       [else
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #t))])]
@@ -2216,7 +2231,7 @@
                 (next-token)
                 (clear-back-to-table)
                 (append-child! (tag->element t))
-                (switch-mode 'in-cell)
+                (switch-mode! 'in-cell)
                 (insert-marker!)]
                [(and end? (string=? name "tr"))
                 (next-token)
@@ -2224,7 +2239,7 @@
                        (clear-back-to-table)
                        (check-top-element "tr")
                        (pop-open-element!)
-                       (switch-mode 'in-table-body)]
+                       (switch-mode! 'in-table-body)]
                       [else
                        (raise-parse-error! (unexpected-token t #f #f))])]
                [(or (and start? (member name (list "caption" "col" "colgroup" "tbody" "tfoot" "thead" "tr") string=?))
@@ -2234,7 +2249,7 @@
                        (clear-back-to-table)
                        (check-top-element "tr")
                        (pop-open-element!)
-                       (switch-mode 'in-table-body)]
+                       (switch-mode! 'in-table-body)]
                       [else
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #t))])]
@@ -2242,7 +2257,7 @@
                 (cond [(element-in-scope? name)
                        (clear-back-to-table)
                        (check-top-element "tr")
-                       (switch-mode 'in-table-body)]
+                       (switch-mode! 'in-table-body)]
                       [else
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #t))])]
@@ -2281,7 +2296,7 @@
                          (raise-parse-error! (unexpected-token t (list name) #f)))
                        (keep-popping name)
                        (clear-formatting-elements!)
-                       (switch-mode 'in-row)]
+                       (switch-mode! 'in-row)]
                       [else
                        (raise-parse-error! (unexpected-token t #f #f))])]
                [(and start? (member name (list "caption" "col" "colgroup" "tbody" "td" "tfoot" "th" "thead" "tr") string=?))
@@ -2317,7 +2332,7 @@
     (raise-parse-error! (unexpected-token token (list "td" "th") #f)))
   (keep-popping (list "td" "th"))
   (clear-formatting-elements!)
-  (switch-mode 'in-row))
+  (switch-mode! 'in-row))
 
 (: in-select-in-table (-> Void))
 (define (in-select-in-table)
@@ -2335,12 +2350,12 @@
          (cond [(and start? (member name (list "caption" "table" "tbody" "tfoot" "thead" "tr" "td" "th") string=?))
                 (raise-parse-error! (unexpected-token t #f #f))
                 (keep-popping "select")
-                (switch-mode (reset-insertion-mode-appropriately))]
+                (switch-mode! (reset-insertion-mode-appropriately))]
                [(and end? (member name (list "caption" "table" "tbody" "tfoot" "thead" "tr" "td" "th") string=?))
                 (cond [(element-in-scope? name)
                        (raise-parse-error! (unexpected-token t #f #f))
                        (keep-popping "select")
-                       (switch-mode (reset-insertion-mode-appropriately))]
+                       (switch-mode! (reset-insertion-mode-appropriately))]
                       [else
                        (next-token)
                        (raise-parse-error! (unexpected-token t #f #t))])])]
@@ -2365,7 +2380,7 @@
            (clear-formatting-elements!)
            (when consume?
              (next-token))
-           (switch-mode 'in-table)]
+           (switch-mode! 'in-table)]
           [else
            (next-token)
            (raise-parse-error! (unexpected-token t #f #t))]))
@@ -2411,7 +2426,7 @@
     ; not sure what to do with strings
     (cond [(current-node-has-name? "colgroup")
            (pop-open-element!)
-           (switch-mode 'in-table)]
+           (switch-mode! 'in-table)]
           [else
            (next-token)
            (raise-parse-error! (unexpected-token t #f #t))]))
@@ -2465,7 +2480,7 @@
                        (raise-parse-error! (unexpected-token t #f #t))]
                       [else
                        (pop-open-element!)
-                       (switch-mode 'in-table)])]
+                       (switch-mode! 'in-table)])]
                [(string=? name "col")
                 (next-token)
                 (raise-parse-error! (unexpected-token t #f #t))]
@@ -2486,7 +2501,7 @@
                 (keep-popping "template")
                 (clear-formatting-elements!)
                 (pop-template-insertion-modes!)
-                (switch-mode (reset-insertion-mode-appropriately))]
+                (switch-mode! (reset-insertion-mode-appropriately))]
                [else
                 (stop-parsing)])]
         [(tokenizer-error? t)
@@ -2511,23 +2526,23 @@
                [(and start? (member name (list "caption" "colgroup" "tbody" "tfoot" "thead") string=?))
                 (pop-template-insertion-modes!)
                 (push-template-insertion-mode 'in-table)
-                (switch-mode 'in-table)]
+                (switch-mode! 'in-table)]
                [(and start? (string=? name "col"))
                 (pop-template-insertion-modes!)
                 (push-template-insertion-mode 'in-column-group)
-                (switch-mode 'in-column-group)]
+                (switch-mode! 'in-column-group)]
                [(and start? (string=? name "tr"))
                 (pop-template-insertion-modes!)
                 (push-template-insertion-mode 'in-body)
-                (switch-mode 'in-table-body)]
+                (switch-mode! 'in-table-body)]
                [(and start? (member name (list "td" "th") string=?))
                 (pop-template-insertion-modes!)
                 (push-template-insertion-mode 'in-row)
-                (switch-mode 'in-row)]
+                (switch-mode! 'in-row)]
                [start?
                 (pop-template-insertion-modes!)
                 (push-template-insertion-mode 'in-body)
-                (switch-mode 'in-body)]
+                (switch-mode! 'in-body)]
                [end?
                 (next-token)
                 (raise-parse-error! (unexpected-token t #f #t))])]))

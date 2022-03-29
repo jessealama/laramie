@@ -21,10 +21,12 @@ BOOTSTRAP
 )
 
 (module+ test
+  (require racket/pretty)
   (let* ([test-name "Issue 14: Simple warmup to Bootstrap starter template"]
          [result (parse simple-html)]
          [root (document-element result)]
          [doc-children (filter element? (descendants result))])
+    (pretty-print doc-children)
     (test-begin
       (check-length doc-children 6)
       (define html-node (car doc-children))
