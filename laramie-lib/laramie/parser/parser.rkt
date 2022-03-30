@@ -455,7 +455,6 @@
             (push-tokenizer! RAWTEXT)
             (switch-mode! 'text)]
            [(tag-name-equals? t "script")
-            (push-mode! 'in-head)
             (in-head:script t)]
            [(tag-name-equals? t "template")
             (in-head:template t)]
