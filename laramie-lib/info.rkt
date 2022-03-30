@@ -1,6 +1,6 @@
 #lang info
 
-(define collection "laramie")
+(define collection 'multi)
 (define version "0.2")
 (define description "Implementation for Laramie")
 (define authors '("jesse@serverracket.com"))
