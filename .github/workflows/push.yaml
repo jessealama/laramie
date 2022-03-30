@@ -16,5 +16,7 @@ jobs:
         sudo: never
     - name: Install pkg and deps
       run: raco pkg install --batch --auto laramie-lib/ laramie-doc/ laramie-test/ laramie/
-    - run: raco test -j 4 laramie-lib/
-    - run: raco test -j 4 laramie-test/
+    - name: Run package-internal tests
+      run: raco test -j 4 laramie-lib/
+    - name: Run package-external tests
+      run: raco test -j 4 laramie-test/
