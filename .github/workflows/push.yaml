@@ -14,9 +14,7 @@ jobs:
         local_catalogs: $GITHUB_WORKSPACE
         dest: '/opt/racketdist'
         sudo: never
-    - name: Register local packages
-      run: |
-        raco pkg install -i --auto --no-setup --skip-installed laramie laramie-test
-        raco pkg update --auto --no-setup laramie-lib laramie-doc laramie laramie-test
-    - run: raco setup --check-pkg-deps laramie
-    - run: raco test -j 4 laramie-lib/ laramie-test/
+    - name: Install pkg and deps
+      run: raco pkg install --batch --auto laramie-lib/ laramie-doc/ laramie-test/ laramie/
+    - run: raco test -j 4 laramie-lib/
+    - run: raco test -j 4 laramie-test/
