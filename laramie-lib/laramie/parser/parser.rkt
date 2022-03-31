@@ -2594,12 +2594,15 @@
   (define in (cond [(string? str) (open-input-string str)]
                    [else (open-input-bytes str)]))
   (port-count-lines! in)
+  (reset-parser-state!)
   (define validated-in (make-validating-input-port in))
-  (parameterize ([current-input-port validated-in]
-                 [include-dropped-chars? #t]
-                 [include-tokenizer-errors? #t])
-    (keep-parsing)
-    (->html (parser-state-document (current-parser-state)))))
+  (begin0
+      (parameterize ([current-input-port validated-in]
+                     [include-dropped-chars? #t]
+                     [include-tokenizer-errors? #t])
+        (keep-parsing)
+        (->html (parser-state-document (current-parser-state))))
+    (close-input-port in)))
 
 (: stop-parsing (-> Void))
 (define (stop-parsing)
