@@ -5,7 +5,8 @@
          turn-on-quirks!
          drop-token!
          scripting-enabled?
-         current-context-node-for-fragment)
+         current-context-node-for-fragment
+         reset-parser-state!)
 
 (require (file "types.rkt")
          (file "../tokenizer/types.rkt"))
@@ -26,6 +27,9 @@
 
 (: current-parser-state (Parameter parser-state))
 (define current-parser-state (make-parameter (initial-parser-state)))
+
+(define (reset-parser-state!)
+  (current-parser-state (initial-parser-state)))
 
 (: current-context-node-for-fragment (Parameter (Option element-node)))
 (define current-context-node-for-fragment (make-parameter #f))
