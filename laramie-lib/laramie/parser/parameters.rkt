@@ -9,6 +9,7 @@
          reset-parser-state!)
 
 (require (file "types.rkt")
+         (file "../tokenizer/parameters.rkt")
          (file "../tokenizer/types.rkt"))
 
 (define (initial-parser-state)
@@ -29,6 +30,7 @@
 (define current-parser-state (make-parameter (initial-parser-state)))
 
 (define (reset-parser-state!)
+  (reset-token-buffer!)
   (current-parser-state (initial-parser-state)))
 
 (: current-context-node-for-fragment (Parameter (Option element-node)))
