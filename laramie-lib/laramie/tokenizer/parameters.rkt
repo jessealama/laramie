@@ -34,6 +34,7 @@
          current-opening-dashes
          current-closing-dashes
          current-token-buffer
+         reset-token-buffer!
          include-dropped-chars?
          previous-tokens
          include-tokenizer-errors?
@@ -102,6 +103,9 @@ Tokenization
 
 (: current-token-buffer (Parameter (Listof (U Token tokenizer))))
 (define current-token-buffer (make-parameter (list)))
+
+(define (reset-token-buffer!)
+  (current-token-buffer (list)))
 
 (: current-location (Parameter location))
 (define current-location (make-parameter (location 1 0 0)))
