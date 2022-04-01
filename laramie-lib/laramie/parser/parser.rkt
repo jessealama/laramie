@@ -900,7 +900,8 @@
          (define tis (current-template-insertion-modes))
          (when (and (null? tis)
                     (error-node-at-eof?))
-           (raise-parse-error! (unexpected-token eof #f #f)))]
+           (raise-parse-error! (unexpected-token eof #f #f)))
+         (stop-parsing)]
         [(tokenizer-error? t)
          (raise-parse-error! t)
          (void (next-token))]
@@ -2595,9 +2596,8 @@
                    [else (open-input-bytes str)]))
   (port-count-lines! in)
   (reset-parser-state!)
-  (define validated-in (make-validating-input-port in))
   (begin0
-      (parameterize ([current-input-port validated-in]
+      (parameterize ([current-input-port in]
                      [include-dropped-chars? #t]
                      [include-tokenizer-errors? #t])
         (keep-parsing)
