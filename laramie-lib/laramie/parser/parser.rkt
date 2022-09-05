@@ -5,6 +5,7 @@
 (require racket/list
          racket/port
          racket/require
+         typed/net/url
          (file "types.rkt")
          (file "dom.rkt")
          (file "parameters.rkt")
@@ -2589,11 +2590,13 @@
   (unless (null? mode)
     (keep-parsing)))
 
-(: parse (-> (U String Bytes)
+(: parse (-> (U String Bytes URL Input-Port)
              document))
-(define (parse str)
-  (define in (cond [(string? str) (open-input-string str)]
-                   [else (open-input-bytes str)]))
+(define (parse thing)
+  (define in (cond [(string? thing) (open-input-string thing)]
+                   [(url? thing) (get-pure-port thing)]
+                   [(input-port? thing) thing]
+                   [else (open-input-bytes thing)]))
   (port-count-lines! in)
   (reset-parser-state!)
   (begin0

@@ -18,7 +18,7 @@
                  0))
       (test-case
           (string-append test-name " [one DTD]")
-        (check-not-false (prolog-dtd p) 1)))))
+        (check-not-false (prolog-dtd p) "[parsing worked]")))))
 
 ; TODO (not close to working yet)
 #;
