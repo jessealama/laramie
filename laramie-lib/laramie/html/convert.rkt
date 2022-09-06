@@ -7,12 +7,14 @@
          racket/list
          racket/match
          racket/function
+         typed/net/url
          typed/racket/unsafe
          (file "types.rkt")
          (prefix-in xml: (file "../private/xml.rkt"))
          (multi-in "../tokenizer"
                    ("types.rkt"
-                    "tokens.rkt")))
+                    "tokens.rkt"))
+         "../parser/parser.rkt")
 
 (module+ test
   (require typed/rackunit))
@@ -99,9 +101,15 @@
                (map html-attribute->xml-attribute (element-attributes elem))
                (html-element-children->xml-element-children (element-content elem))))
 
-(: html->xml (-> document
+(: html->xml (-> (U document String Bytes Input-Port URL)
                  xml:document))
 (define (html->xml doc)
-  (xml:document (html-prolog->xml-prolog (document-prolog doc))
-                (html-element->xml-element (document-element doc))
-                (map html-comment->xml-comment (document-misc doc))))
+  (cond [(or (string? doc)
+             (bytes? doc)
+             (input-port? doc)
+             (url? doc))
+         (html->xml (parse doc))]
+        [else
+         (xml:document (html-prolog->xml-prolog (document-prolog doc))
+                       (html-element->xml-element (document-element doc))
+                       (map html-comment->xml-comment (document-misc doc)))]))
