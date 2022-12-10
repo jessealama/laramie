@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang typed/racket/base/optional
 
 (provide make-character-token
          make-character-token/after-read

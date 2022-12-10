@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang typed/racket/base/optional
 
 (provide (struct-out location)
          (struct-out document-type)

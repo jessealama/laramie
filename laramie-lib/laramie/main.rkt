@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang typed/racket/base/optional
 
 (require (file "parser/main.rkt"))
 (provide (all-from-out (file "parser/main.rkt")))

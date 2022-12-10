@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang typed/racket/base/optional
 
 (provide current-document
          append-child!
@@ -50,11 +50,8 @@
          (file "types.rkt")
          (file "../tokenizer/types.rkt")
          (file "../tokenizer/tokens.rkt")
-         (file "../private/todo.rkt")
          (file "parameters.rkt")
-         (file "../tokenizer/parameters.rkt")
-         ;(file "infrastructure.rkt")
-         )
+         (file "../tokenizer/parameters.rkt"))
 
 (module+ test
   (require typed/rackunit))
