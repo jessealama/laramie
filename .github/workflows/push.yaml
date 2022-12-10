@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - uses: Bogdanp/setup-racket@v1.7
+    - uses: Bogdanp/setup-racket@v1.8
       with:
         architecture: 'x64'
         distribution: 'full'
@@ -18,6 +18,8 @@ jobs:
       run: raco pkg install --batch --auto laramie-lib/ laramie-doc/ laramie-test/ laramie/
     - name: Check for unnecessary dependencies
       run: raco setup --check-pkg-deps laramie
+    - name: raco make
+      run: find . -type f -name '*.rkt' | xargs raco make
     - name: Run package-internal tests
       run: raco test -j 4 laramie-lib/
     - name: Run package-external tests
