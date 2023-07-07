@@ -6,6 +6,7 @@
 
 (define build-deps '("base"
                      "rackunit-lib"
+                     "rackunit-typed"
                      "typed-racket-lib"
                      "laramie-lib"))
 
