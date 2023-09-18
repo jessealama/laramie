@@ -1709,15 +1709,16 @@
 (define (table-element-in-table-scope?)
   (element-in-scope? "table" (hash html-namespace (list "table"))))
 
+(: default-scopes-by-namespace (Immutable-HashTable String (Listof String)))
+(define default-scopes-by-namespace
+  (hash html-namespace (list "applet" "caption" "html" "table" "td" "th" "marquee" "object" "template")
+        mathml-namespace (list "mi" "mo" "mn" "ms" "mtext" "annotation-xml")
+        svg-namespace (list "foreignObject" "desc" "title")))
+
 (: element-in-scope? (->* ((U String (Listof String)))
                           ((Immutable-HashTable String (Listof String)))
                           Boolean))
 (define (element-in-scope? node-name [additional-scopes (hash)])
-  (: default-scopes-by-namespace (Immutable-HashTable String (Listof String)))
-  (define default-scopes-by-namespace
-    (hash html-namespace (list "applet" "caption" "html" "table" "td" "th" "marquee" "object" "template")
-          mathml-namespace (list "mi" "mo" "mn" "ms" "mtext" "annotation-xml")
-          svg-namespace (list "foreignObject" "desc" "title")))
   (: do-it (-> (Listof element-node) Boolean))
   (define (do-it nodes)
     (cond [(null? nodes) #f]
@@ -1978,6 +1979,7 @@
                 (current-parser-state)
                 [foster-parenting-enabled? #f])))
 
+; https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-intable
 (: in-table (->* ()
                  ((Option (U EOF Token)))
                  Void))
@@ -2089,7 +2091,7 @@
 
 (: clear-back-to-table (-> Void))
 (define (clear-back-to-table)
-  (unless (current-node-has-name? (list "table" "template" "html"))
+  (unless (current-node-has-name? (list "tbody" "tfoot" "thead" "template" "html"))
     (pop-open-element!)
     (clear-back-to-table)))
 
@@ -2246,7 +2248,6 @@
                        (raise-parse-error! (unexpected-token t #f #f))])]
                [(or (and start? (member name (list "caption" "col" "colgroup" "tbody" "tfoot" "thead" "tr") string=?))
                     (and end? (string=? name "table")))
-
                 (cond [(tr-element-in-table-scope?)
                        (clear-back-to-table)
                        (check-top-element "tr")
@@ -2277,6 +2278,7 @@
         [else
          (error (format "[in-row] Cannot handle token: ~a" t))]))
 
+; https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-intd
 (: in-cell (-> Void))
 (define (in-cell)
   (define t (peek-token))

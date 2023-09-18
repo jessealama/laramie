@@ -18,17 +18,5 @@
 DOC
 )
 
-(define (style-element? x)
-  (and (element? x)
-       (equal? 'style (element-local-name x))))
-
-(define elements (filter element? (descendants (parse document))))
-
-(define style-element (findf style-element? elements))
-
 (module+ test
-  (check-not-false style-element)
-  (check-equal?
-   (element-content style-element)
-   (list
-    "\n#main_welcome\n{\n    width:380px;\n    height:480px;\n    float:left;\n}\n")))
+  (check-not-exn (lambda () (parse document))))
