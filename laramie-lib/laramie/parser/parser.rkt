@@ -2246,7 +2246,6 @@
                        (raise-parse-error! (unexpected-token t #f #f))])]
                [(or (and start? (member name (list "caption" "col" "colgroup" "tbody" "tfoot" "thead" "tr") string=?))
                     (and end? (string=? name "table")))
-
                 (cond [(tr-element-in-table-scope?)
                        (clear-back-to-table)
                        (check-top-element "tr")
