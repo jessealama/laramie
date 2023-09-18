@@ -472,7 +472,8 @@
                                                         "meta"
                                                         "title"
                                                         "noscript"
-                                                        "noframes" "style"
+                                                        "noframes"
+                                                        "style"
                                                         "script"
                                                         "template"
                                                         "head")
