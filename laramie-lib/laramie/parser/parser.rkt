@@ -2090,7 +2090,7 @@
 
 (: clear-back-to-table (-> Void))
 (define (clear-back-to-table)
-  (unless (current-node-has-name? (list "table" "template" "html"))
+  (unless (current-node-has-name? (list "tbody" "tfoot" "thead" "template" "html"))
     (pop-open-element!)
     (clear-back-to-table)))
 
