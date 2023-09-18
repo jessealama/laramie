@@ -1978,6 +1978,7 @@
                 (current-parser-state)
                 [foster-parenting-enabled? #f])))
 
+; https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-intable
 (: in-table (->* ()
                  ((Option (U EOF Token)))
                  Void))
