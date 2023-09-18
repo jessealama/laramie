@@ -10,7 +10,7 @@ jobs:
         architecture: 'x64'
         distribution: 'full'
         variant: "CS"
-        version: "8.7"
+        version: "8.10"
         local_catalogs: $GITHUB_WORKSPACE
         dest: '/opt/racketdist'
         sudo: never
