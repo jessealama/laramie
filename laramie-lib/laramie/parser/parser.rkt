@@ -2277,6 +2277,7 @@
         [else
          (error (format "[in-row] Cannot handle token: ~a" t))]))
 
+; https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-intd
 (: in-cell (-> Void))
 (define (in-cell)
   (define t (peek-token))
