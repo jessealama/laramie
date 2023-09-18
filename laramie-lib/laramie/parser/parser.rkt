@@ -454,7 +454,7 @@
             (next-token)
             (append-child! element)
             (push-tokenizer! RAWTEXT)
-            (switch-mode! 'text)]
+            (push-mode! 'text)]
            [(tag-name-equals? t "script")
             (in-head:script t)]
            [(tag-name-equals? t "template")
