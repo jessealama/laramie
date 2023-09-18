@@ -1709,15 +1709,16 @@
 (define (table-element-in-table-scope?)
   (element-in-scope? "table" (hash html-namespace (list "table"))))
 
+(: default-scopes-by-namespace (Immutable-HashTable String (Listof String)))
+(define default-scopes-by-namespace
+  (hash html-namespace (list "applet" "caption" "html" "table" "td" "th" "marquee" "object" "template")
+        mathml-namespace (list "mi" "mo" "mn" "ms" "mtext" "annotation-xml")
+        svg-namespace (list "foreignObject" "desc" "title")))
+
 (: element-in-scope? (->* ((U String (Listof String)))
                           ((Immutable-HashTable String (Listof String)))
                           Boolean))
 (define (element-in-scope? node-name [additional-scopes (hash)])
-  (: default-scopes-by-namespace (Immutable-HashTable String (Listof String)))
-  (define default-scopes-by-namespace
-    (hash html-namespace (list "applet" "caption" "html" "table" "td" "th" "marquee" "object" "template")
-          mathml-namespace (list "mi" "mo" "mn" "ms" "mtext" "annotation-xml")
-          svg-namespace (list "foreignObject" "desc" "title")))
   (: do-it (-> (Listof element-node) Boolean))
   (define (do-it nodes)
     (cond [(null? nodes) #f]
